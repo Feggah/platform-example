@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: crossplane-system
+  name: provider-config-gcp-secret
+type: Opaque
+data:
+  credentials.json: BASE64ENCODED_GCP_PROVIDER_CREDS
+---
+apiVersion: gcp.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  projectID: feggah-dns
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: provider-config-gcp-secret
+      key: credentials.json

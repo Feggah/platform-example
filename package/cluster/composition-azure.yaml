@@ -1,0 +1,12 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: aks
+  labels:
+    provider: azure
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: platform.feggah.com/v1alpha1
+    kind: XCluster
+  resources: [] # TODO

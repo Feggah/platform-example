@@ -1,0 +1,14 @@
+apiVersion: platform.feggah.com/v1alpha1
+kind: Cluster
+metadata:
+  name: aks-example
+spec:
+  compositionSelector:
+    matchLabels:
+      provider: azure
+  parameters:
+    nodes:
+      count: 2
+      tier: small
+    region: us-central
+    network: /subscriptions/<id>/resourceGroups/feggah/providers/Microsoft.Network/virtualNetworks/Default/subnets/Default

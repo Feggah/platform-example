@@ -1,0 +1,117 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: gke
+  labels:
+    provider: gcp
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: platform.feggah.com/v1alpha1
+    kind: XCluster
+  resources:
+    - name: gke-cluster
+      base:
+        apiVersion: container.gcp.crossplane.io/v1beta2
+        kind: Cluster
+        spec:
+          forProvider:
+            # location: TO BE PATCHED
+            # network: TO BE PATCHED
+            initialClusterVersion: latest
+            masterAuthorizedNetworksConfig:
+              enabled: false
+            networkConfig:
+              enableIntraNodeVisibility: true
+            loggingService: logging.googleapis.com/kubernetes
+            monitoringService: monitoring.googleapis.com/kubernetes
+            addonsConfig:
+              gcePersistentDiskCsiDriverConfig:
+                enabled: true
+          # writeConnectionSecretToRef:
+          #   name: TO BE PATCHED
+          #   namespace: TO BE PATCHED
+      patches:
+        - fromFieldPath: spec.parameters.network
+          toFieldPath: spec.forProvider.network
+
+        - fromFieldPath: spec.parameters.region
+          toFieldPath: spec.forProvider.location
+          transforms:
+            - type: map
+              map:
+                us-east: us-east1
+                us-central: us-central1
+
+        - fromFieldPath: metadata.name
+          toFieldPath: spec.writeConnectionSecretToRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-gkecluster"
+
+        - fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
+          toFieldPath: spec.writeConnectionSecretToRef.namespace
+          policy:
+            fromFieldPath: Required
+      connectionDetails:
+        - fromConnectionSecretKey: kubeconfig
+
+    - name: gke-nodepool
+      base:
+        apiVersion: container.gcp.crossplane.io/v1beta1
+        kind: NodePool
+        spec:
+          forProvider:
+            # location: TO BE PATCHED
+            # initialNodeCount: TO BE PATCHED
+            clusterSelector:
+              matchControllerRef: true
+            autoscaling:
+              # minNodeCount: TO BE PATCHED
+              # maxNodeCount: TO BE PATCHED
+              enabled: true
+            config:
+              # machineType: TO BE PATCHED
+              diskType: pd-standard
+              diskSizeGb: 100
+              imageType: cos_containerd
+              preemptible: true
+              shieldedInstanceConfig:
+                enableIntegrityMonitoring: true
+                enableSecureBoot: true
+              metadata:
+                disable-legacy-endpoints: "true"
+              oauthScopes:
+                - https://www.googleapis.com/auth/cloud-platform
+            management:
+              autoRepair: true
+              autoUpgrade: false
+            maxPodsConstraint:
+              maxPodsPerNode: 55
+      patches:
+        - fromFieldPath: spec.parameters.nodes.tier
+          toFieldPath: spec.forProvider.config.machineType
+          transforms:
+            - type: map
+              map:
+                small: n1-standard-1
+                medium: n1-standard-2
+                large: n1-standard-4
+
+        - fromFieldPath: spec.parameters.region
+          toFieldPath: spec.forProvider.location
+          transforms:
+            - type: map
+              map:
+                us-east: us-east1
+                us-central: us-central1
+
+        - fromFieldPath: spec.parameters.nodes.count
+          toFieldPath: spec.forProvider.initialNodeCount
+
+        - fromFieldPath: spec.parameters.nodes.count
+          toFieldPath: spec.forProvider.autoscaling.minNodeCount
+
+        - fromFieldPath: spec.parameters.nodes.count
+          toFieldPath: spec.forProvider.autoscaling.maxNodeCount

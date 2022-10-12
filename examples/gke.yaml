@@ -1,0 +1,14 @@
+apiVersion: platform.feggah.com/v1alpha1
+kind: Cluster
+metadata:
+  name: gke-example
+spec:
+  compositionSelector:
+    matchLabels:
+      provider: gcp
+  parameters:
+    nodes:
+      count: 1
+      tier: small
+    region: us-central
+    network: projects/feggah-dns/global/networks/default

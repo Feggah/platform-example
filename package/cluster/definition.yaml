@@ -59,3 +59,12 @@ spec:
                 - region
             required:
             - parameters
+    additionalPrinterColumns:
+      - name: Region
+        type: string
+        description: The cluster region
+        jsonPath: .spec.parameters.region
+      - name: Tier
+        type: string
+        description: The cluster default pool machine tier.
+        jsonPath: .spec.parameters.nodes.tier
